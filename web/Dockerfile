@@ -18,6 +18,6 @@ WORKDIR /webserver
 
 STOPSIGNAL SIGINT
 
-CMD uwsgi --pythonpath /var/www --http :8950 --module websmash:app --touch-reload /tmp/reload_websmash
+CMD uwsgi --workers 12 --pythonpath /var/www --http :8950 --module websmash:app --touch-reload /tmp/reload_websmash
 
 EXPOSE 8950
