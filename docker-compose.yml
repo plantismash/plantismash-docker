@@ -9,13 +9,13 @@ services:
 
     volumes:
       - /local/data/plantismash/plantismash-data:/data/plantismash
-  
+
   plantismash-backend:
     image: plantismash-backend:latest
 
     user: plantismash
 
-    ports: 
+    ports:
       - 8951:8951
 
     volumes:
