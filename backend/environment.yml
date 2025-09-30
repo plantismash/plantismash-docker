@@ -3,20 +3,41 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=2.7
+  # Conda dependencies
+  - python=3.8
   - glimmer
   - glimmerhmm
-  - hmmer2
-  - hmmer=3.1b2
-  - fasttree=2.1.8
-  - diamond=0.8.9=boost1.60_1
+  - hmmer=3.3.2
+  - bioconda/label/cf201901::hmmer2
+  - fasttree=2.1.11       
+  - diamond=2.0.15
   - muscle=3.8.31
   - prodigal
-  - blast=2.2.31
-  - cd-hit=4.6.6
-  - xz=5.2.2
-  - libxml2=2.9.3
+  - blast=2.12.0
+  - cd-hit=4.8.1
+  - libxml2=2.10.3
   - pplacer
-  - backports.lzma
   - ncbi-datasets-cli
   - unzip
+  - biopython==1.76
+ # Extras for TFBS and visualization
+  - logomaker
+  - pytest 
+  - tqdm
+  # Pip dependencies
+  - pip
+  - pip:
+      - argparse
+      - straight.plugin==1.4.0-post-1
+      - cssselect
+      - pyquery==1.2.9
+      - numpy==1.24.4
+      - helperlibs
+      - svgwrite
+      - openpyxl
+      - networkx==3.1
+      - python-louvain==0.16
+      - bcbio-gff==0.6.7
+      - ete3
+      # TFBS specific dependencies
+      - MOODS-python==1.9.4.1
