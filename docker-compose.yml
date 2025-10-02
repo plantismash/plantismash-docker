@@ -20,3 +20,10 @@ services:
 
     volumes:
       - /local/data/plantismash/plantismash-data:/data/plantismash
+
+    environment:
+      - ANTISMASH_EMAIL_FROM=changeme
+      - ANTISMASH_EMAIL_ERROR=null@localhost
+      - ANTISMASH_BASE_URL=https://plantismash.bioinformatics.nl
+      - TELNET_MAIL_SERVER=changeme
+      - TELNET_MAIL_DOMAIN=changeme
