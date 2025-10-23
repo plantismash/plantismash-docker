@@ -1,0 +1,2 @@
+SETTINGS_FILE=web/settings.cfg
+STATUS_URL=https://plantismash.bioinformatics.nl/server_status

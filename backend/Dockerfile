@@ -1,78 +1,76 @@
-FROM python:2.7
+FROM mambaorg/micromamba
+
+
+ARG NEW_MAMBA_USER=plantismash
+ARG NEW_MAMBA_USER_ID=1002
+ARG NEW_MAMBA_USER_GID=1004
+USER root
+
+RUN if grep -q '^ID=alpine$' /etc/os-release; then \
+      # alpine does not have usermod/groupmod
+      apk add --no-cache --virtual temp-packages shadow; \
+    fi && \
+    usermod "--login=${NEW_MAMBA_USER}" "--home=/home/${NEW_MAMBA_USER}" \
+        --move-home "-u ${NEW_MAMBA_USER_ID}" "${MAMBA_USER}" && \
+    groupmod "--new-name=${NEW_MAMBA_USER}" \
+        "-g ${NEW_MAMBA_USER_GID}" "${MAMBA_USER}" && \
+    if grep -q '^ID=alpine$' /etc/os-release; then \
+      # remove the packages that were only needed for usermod/groupmod
+      apk del temp-packages; \
+    fi && \
+    # Update the expected value of MAMBA_USER for the
+    # _entrypoint.sh consistency check.
+    echo "${NEW_MAMBA_USER}" > "/etc/arg_mamba_user" && \
+    :
+ENV MAMBA_USER=$NEW_MAMBA_USER
+
+USER $MAMBA_USER
+
+
+
+WORKDIR /home/$MAMBA_USER
+
+USER root
+
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /home/$MAMBA_USER/environment.yml
+
+RUN apt update
+RUN apt install -y wget
+RUN apt install -y unzip
+RUN apt install -y gcc
+RUN apt install -y g++
+
+
+
+USER $MAMBA_USER
+
+RUN micromamba install -y -v -n base -f /home/$MAMBA_USER/environment.yml && \
+    micromamba clean --all --yes
+
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 ## DEPENDENCIES ##
 
-# glimmer first
-RUN wget https://ccb.jhu.edu/software/glimmer/glimmer302b.tar.gz; \
-    tar -xzf glimmer302b.tar.gz; \
-    cd glimmer3.02/src; \
-    make; \
-    cd /; 
-
-# glimmerhmm
-RUN wget https://ccb.jhu.edu/software/glimmerhmm/dl/GlimmerHMM-3.0.4.tar.gz; \
-    tar -xzf GlimmerHMM-3.0.4.tar.gz;
-
-# hmmer2
-RUN wget http://eddylab.org/software/hmmer/hmmer-2.3.2.tar.gz; \
-    tar -xzf hmmer-2.3.2.tar.gz; \
-    cd hmmer-2.3.2; \
-    ./configure; \
-    make; \
-    cd /;
-
-# hmmer3
-RUN wget http://eddylab.org/software/hmmer/hmmer-3.1b2.tar.gz; \
-    tar -xzf hmmer-3.1b2.tar.gz; \
-    cd hmmer-3.1b2; \
-    ./configure; \
-    make; \
-    # install this one normally. bins in /usr/local/bin
-    make install; \
-    cd /;
-
-# diamond
-RUN wget https://github.com/bbuchfink/diamond/releases/download/v0.7.10/diamond-linux64.tar.gz; \
-    tar -xzf diamond-linux64.tar.gz; \
-    mv diamond bin;
-
-# blast+
-RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.31/ncbi-blast-2.2.31+-x64-linux.tar.gz; \
-    tar -xzf ncbi-blast-2.2.31+-x64-linux.tar.gz;
-
-# fasttree
-RUN wget -P bin http://www.microbesonline.org/fasttree/FastTree;
-
-# prodigal
-RUN wget -P bin https://github.com/hyattpd/Prodigal/releases/download/v2.6.3/prodigal.linux;
-
-# link hmmer2 binaries
-RUN ln hmmer-2.3.2/src/hmmalign bin/hmmalign2; \
-    ln hmmer-2.3.2/src/hmmbuild bin/hmmbuild2; \
-    ln hmmer-2.3.2/src/hmmcalibrate bin/hmmcalibrate2; \
-    ln hmmer-2.3.2/src/hmmconvert bin/hmmconvert2; \
-    ln hmmer-2.3.2/src/hmmemit bin/hmmemit2; \
-    ln hmmer-2.3.2/src/hmmfetch bin/hmmfetch2; \
-    ln hmmer-2.3.2/src/hmmindex bin/hmmindex2; \
-    ln hmmer-2.3.2/src/hmmpfam bin/hmmpfam2; \
-    ln hmmer-2.3.2/src/hmmsearch bin/hmmsearch2;
-
-# link glimmerhmm
-RUN ln /GlimmerHMM/bin/glimmerhmm_linux_x86_64 bin/glimmerhmm;
-
-# simple apt installs
-RUN apt update;
-RUN apt install -y default-jre extract muscle prodigal liblzma-dev libxml2-dev redis;
-
 # code
-RUN wget https://github.com/plantismash/plantismash/archive/refs/heads/master.zip; \
-    unzip master.zip; \
-    mv plantismash-master plantismash; \ 
-    cd plantismash; \
-    pip install -r requirements.txt; \
-    cd /;
+RUN wget https://github.com/plantismash/plantismash/archive/refs/heads/master.tar.gz;
+RUN tar -xvf master.tar.gz;
+RUN mv plantismash-master plantismash;
+RUN cd plantismash;
 
-# dispatcher
+WORKDIR /home/$MAMBA_USER/plantismash/graphlan
+
+RUN pip install .
+
+WORKDIR /home/$MAMBA_USER/plantismash
+
+RUN python download_databases.py --overwrite yes
+
+# clusterblast. TODO: remove once this is integrated into clusterblast itself
+
+WORKDIR /home/$MAMBA_USER
+
+# dispatcher mail
+RUN echo temp
 RUN wget https://github.com/plantismash/dispatcher/archive/refs/heads/master.zip -O dispatcher.zip; \
     unzip dispatcher.zip; \
     mv dispatcher-master dispatcher; \
@@ -80,15 +78,29 @@ RUN wget https://github.com/plantismash/dispatcher/archive/refs/heads/master.zip
     pip install -r requirements.txt;
 
 # replace with old redis version
-RUN pip install redis==2.10.6 
+#USER root
+#RUN apt install -y redis
+#USER $MAMBA_USER
+#RUN pip install redis==2.10.6 
 
-ENV PATH=/glimmer3.02/bin:/hmmer-2.3.2:/hmmer-3.1b2:/ncbi-blast-2.2.31+:/plantismash:$PATH
+# ENV PATH=/glimmer3.02/bin:/hmmer-2.3.2:/hmmer-3.1b2:/ncbi-blast-2.2.31+:/plantismash:$PATH
 
-WORKDIR /dispatcher
+# redis
+
+USER root
+
+RUN apt install -y redis
+
+USER $MAMBA_USER
+
+
+
+WORKDIR /home/$MAMBA_USER/dispatcher
 
 STOPSIGNAL SIGINT
 
 CMD redis-server --daemonize yes --port 8951 --protected-mode no; \
-    ./runSMASH -q redis://localhost:8951/0 --workdir /data/plantismash/upload --container
+    ./runSMASH -c 16 -q redis://localhost:8951/0 --workdir /data/plantismash/upload --container \
+    --script /home/$MAMBA_USER/plantismash/run_antismash.py
 
 EXPOSE 8951
