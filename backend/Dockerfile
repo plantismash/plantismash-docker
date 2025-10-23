@@ -52,9 +52,9 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ## DEPENDENCIES ##
 
 # code
-RUN wget https://github.com/plantismash/plantismash/archive/refs/tags/2.0.tar.gz;
-RUN tar -xvf 2.0.tar.gz;
-RUN mv plantismash-2.0 plantismash;
+RUN wget https://github.com/plantismash/plantismash/archive/refs/heads/master.tar.gz;
+RUN tar -xvf master.tar.gz;
+RUN mv plantismash-master plantismash;
 RUN cd plantismash;
 
 WORKDIR /home/$MAMBA_USER/plantismash/graphlan
@@ -71,9 +71,9 @@ WORKDIR /home/$MAMBA_USER
 
 # dispatcher mail
 RUN echo temp
-RUN wget https://github.com/plantismash/dispatcher/archive/feature/telnet-mail-service.zip -O dispatcher.zip; \
+RUN wget https://github.com/plantismash/dispatcher/archive/refs/heads/master.zip -O dispatcher.zip; \
     unzip dispatcher.zip; \
-    mv dispatcher-feature-telnet-mail-service dispatcher; \
+    mv dispatcher-master dispatcher; \
     cd dispatcher; \
     pip install -r requirements.txt;
 

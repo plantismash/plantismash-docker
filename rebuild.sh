@@ -12,7 +12,7 @@ echo "Stopping docker services"
 docker-compose stop
 
 echo "Removing old containers"
-docker-compose rm
+docker-compose rm -f
 
 echo echo "Recreating containers"
 docker-compose create
